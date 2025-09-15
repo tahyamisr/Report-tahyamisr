@@ -345,7 +345,7 @@ export function PlanForm() {
 
             {showEventForm && (
                 <div className="p-4 border rounded-md mt-4 space-y-4">
-                    <h4 className="font-bold text-lg">{editingEventIndex !== null ? 'تعديل الفعالية' : 'إضافة فعالية جديدة'}</h4>
+                    <h4 className="font-bold text-lg">{editingEventIndex !== null ? 'تعديل التقرير' : 'إضافة تقرير جديد'}</h4>
                     <FormItem>
                       <FormLabel>ما هو الحدث؟</FormLabel>
                       <FormControl>
