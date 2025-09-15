@@ -465,7 +465,7 @@ export function PlanForm() {
                 <span>جاري التحميل...</span>
               </>
             ) : (
-              "تنزيل الخطة PDF"
+              "تنزيل التقرير pdf"
             )}
           </Button>
         </div>
