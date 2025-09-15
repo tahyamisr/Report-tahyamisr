@@ -51,6 +51,7 @@ const formSchema = z.object({
         details: z.string().min(1, "تفاصيل الحدث مطلوبة."),
         date: z.string().min(1, "التاريخ مطلوب."),
         type: z.string().min(1, "نوع الحدث مطلوب."),
+        result: z.string().min(1, "نتيجة الحدث مطلوبة."),
       })
     )
     .min(1, "يجب إضافة فعالية واحدة على الأقل."),
@@ -70,6 +71,8 @@ const governorates = [
 ];
 
 const eventTypes = ["اونلاين", "اوفلاين"];
+const eventResults = ["تم", "لم يتم"];
+
 
 export function PlanForm() {
   const [isPending, startTransition] = useTransition();
@@ -81,7 +84,7 @@ export function PlanForm() {
   
   const [editingEventIndex, setEditingEventIndex] = React.useState<number | null>(null);
 
-  const initialNewEventState = { details: "", date: "", type: "" };
+  const initialNewEventState = { details: "", date: "", type: "", result: "" };
   const initialNewDateState = { day: "", month: "", year: new Date().getFullYear().toString() };
 
   // State for the new/editing event being created
@@ -127,7 +130,7 @@ export function PlanForm() {
     const fullDate = newDate.day && newDate.month && newDate.year ? `${newDate.day}/${newDate.month}/${newDate.year}` : "";
     const eventToSave = { ...newEvent, date: fullDate };
 
-    if (!eventToSave.details || !eventToSave.date || !eventToSave.type) {
+    if (!eventToSave.details || !eventToSave.date || !eventToSave.type || !eventToSave.result) {
         toast({
             title: "بيانات غير مكتملة",
             description: "الرجاء ملء جميع حقول الفعالية قبل الحفظ.",
@@ -172,6 +175,7 @@ export function PlanForm() {
       details: eventToEdit.details,
       date: eventToEdit.date,
       type: eventToEdit.type,
+      result: eventToEdit.result,
     });
     setNewDate({ day, month, year });
     setShowEventForm(true);
@@ -188,7 +192,7 @@ export function PlanForm() {
         month: values.month,
         presidentSign: values.president,
         deputySigns: values.deputies.map(d => d.name).filter(Boolean),
-        events: values.events.map(e => ({ name: e.details, date: e.date, type: e.type })),
+        events: values.events.map(e => ({ name: e.details, date: e.date, type: e.type, result: e.result })),
         telegramUser: telegramUser ? {
           id: telegramUser.id,
           firstName: telegramUser.first_name,
@@ -314,6 +318,7 @@ export function PlanForm() {
                 </div>
                 <p><strong>التاريخ:</strong> {field.date}</p>
                 <p><strong>النوع:</strong> {field.type}</p>
+                <p><strong>النتيجة:</strong> {field.result}</p>
                  <div className="absolute top-2 left-2 flex gap-2">
                     <Button
                       type="button"
@@ -364,6 +369,15 @@ export function PlanForm() {
                           value={newEvent.type}>
                         <FormControl><SelectTrigger><SelectValue placeholder="اختر النوع" /></SelectTrigger></FormControl>
                         <SelectContent>{eventTypes.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </FormItem>
+                    <FormItem>
+                      <FormLabel>نتيجة الحدث</FormLabel>
+                      <Select 
+                          onValueChange={(value) => setNewEvent({...newEvent, result: value})} 
+                          value={newEvent.result}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="اختر النتيجة" /></SelectTrigger></FormControl>
+                        <SelectContent>{eventResults.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
                       </Select>
                     </FormItem>
                     <Button type="button" onClick={handleSaveEvent}>حفظ الفعالية</Button>

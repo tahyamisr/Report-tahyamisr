@@ -21,6 +21,7 @@ const webhookSchema = z.object({
       name: z.string(),
       date: z.string(),
       type: z.string(),
+      result: z.string(),
     })
   ),
   telegramUser: telegramUserSchema,
