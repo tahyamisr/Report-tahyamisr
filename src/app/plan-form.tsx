@@ -385,7 +385,7 @@ export function PlanForm() {
             )}
              <div className="mt-4 text-center">
                 <Button type="button" onClick={handleAddNewEventClick} variant="secondary" disabled={showEventForm || !selectedMonth}>
-                  اضافة حدث +
+                  اضافة تقرير
                 </Button>
             </div>
         </div>
