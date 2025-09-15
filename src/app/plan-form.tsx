@@ -357,7 +357,7 @@ export function PlanForm() {
                       </FormControl>
                     </FormItem>
                     <FormItem>
-                      <FormLabel>متى سيقام الحدث؟</FormLabel>
+                      <FormLabel>تاريخ إنعقاد الحدث؟</FormLabel>
                        <FormControl>
                           <DateSelector value={newDate} onChange={setNewDate} />
                       </FormControl>
