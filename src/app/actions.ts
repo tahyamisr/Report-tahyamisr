@@ -14,6 +14,7 @@ const telegramUserSchema = z.object({
 const webhookSchema = z.object({
   governorate: z.string(),
   month: z.string(),
+  year: z.string(),
   presidentSign: z.string(),
   deputySigns: z.array(z.string()),
   events: z.array(

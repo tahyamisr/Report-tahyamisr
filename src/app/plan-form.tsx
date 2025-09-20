@@ -45,6 +45,7 @@ const arabicQuadName = z.string()
 const formSchema = z.object({
   governorate: z.string().min(1, "الرجاء اختيار المحافظة."),
   month: z.string().min(1, "الرجاء اختيار الشهر."),
+  year: z.string().min(1, "الرجاء اختيار السنة."),
   events: z
     .array(
       z.object({
@@ -72,6 +73,9 @@ const governorates = [
 
 const eventTypes = ["اونلاين", "اوفلاين"];
 const eventResults = ["تم", "لم يتم"];
+
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 7 }, (_, i) => (currentYear - 1 + i).toString());
 
 
 export function PlanForm() {
@@ -108,6 +112,7 @@ export function PlanForm() {
     defaultValues: {
       governorate: "",
       month: "",
+      year: new Date().getFullYear().toString(),
       events: [],
       deputies: [{ name: "" }],
       president: "",
@@ -115,6 +120,7 @@ export function PlanForm() {
   });
   
   const selectedMonth = form.watch("month");
+  const selectedYear = form.watch("year");
 
   const { fields: eventFields, append: appendEvent, remove: removeEvent, update: updateEvent } = useFieldArray({
     control: form.control,
@@ -161,7 +167,7 @@ export function PlanForm() {
     setNewDate({
       day: "",
       month: monthNumber,
-      year: new Date().getFullYear().toString(),
+      year: selectedYear || new Date().getFullYear().toString(),
     });
     setShowEventForm(true);
   };
@@ -190,6 +196,7 @@ export function PlanForm() {
       const submissionData = {
         governorate: values.governorate,
         month: values.month,
+        year: values.year,
         presidentSign: values.president,
         deputySigns: values.deputies.map(d => d.name).filter(Boolean),
         events: values.events.map(e => ({ name: e.details, date: e.date, type: e.type, result: e.result })),
@@ -233,7 +240,7 @@ export function PlanForm() {
         </Select>
          <Select onValueChange={(year) => onChange({...value, year})} value={value.year}>
           <SelectTrigger><SelectValue placeholder="السنة" /></SelectTrigger>
-          <SelectContent>{Array.from({ length: 6 }, (_, i) => <SelectItem key={i} value={`${new Date().getFullYear() + i}`}>{new Date().getFullYear() + i}</SelectItem>)}</SelectContent>
+          <SelectContent>{years.map(y => <SelectItem key={y} value={y}>{y}</SelectItem>)}</SelectContent>
         </Select>
       </div>
     );
@@ -254,7 +261,7 @@ export function PlanForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <h3 className="text-3xl font-bold text-center text-primary my-6">تقرير الشهر المركزي</h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-lg mb-8 p-4 bg-muted/50 rounded-md">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-lg mb-8 p-4 bg-muted/50 rounded-md">
             <FormField
               control={form.control}
               name="governorate"
@@ -294,10 +301,28 @@ export function PlanForm() {
                 </FormItem>
               )}
             />
+             <FormField
+              control={form.control}
+              name="year"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-bold">السنة:</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger><SelectValue placeholder="اختر السنة" /></SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {years.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
         </div>
         
         <div className="text-foreground text-sm leading-relaxed mb-6 text-center space-y-2 bg-muted/50 p-3 rounded-md">
-            <p>تقرير شهر <span className="font-bold text-primary">{selectedMonth || "................"}</span></p>
+            <p>تقرير شهر <span className="font-bold text-primary">{selectedMonth || "................"}</span> لعام <span className="font-bold text-primary">{selectedYear || "...."}</span></p>
             <p>مقدم من لجنة التنظيم بمحافظة <span className="font-bold text-primary">{govDisplay}</span>.</p>
             <p className="font-semibold">إلى السادة:</p>
             <ul className="list-none p-0 m-0 text-xs text-muted-foreground">
