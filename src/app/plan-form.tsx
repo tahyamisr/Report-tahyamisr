@@ -329,9 +329,9 @@ export function PlanForm() {
             <p>مقدم من لجنة التنظيم بمحافظة <span className="font-bold text-primary">{govDisplay}</span>.</p>
             <p className="font-semibold">إلى السادة:</p>
             <ul className="list-none p-0 m-0 text-xs text-muted-foreground">
-                <li>القائد/ <strong className="text-foreground">إسلام فارس</strong> (رئيس لجنة التنظيم المركزية)</li>
-                <li>القائد/ <strong className="text-foreground">ريم منصور</strong> (نائب رئيس اللجنة)</li>
-                <li>القائد/ <strong className="text-foreground">أحمد حسن</strong> (نائب رئيس اللجنة)</li>
+                <li>المهندس/<strong className="text-foreground">إسلام فارس</strong> (رئيس لجنة التنظيم المركزية)</li>
+                <li>الأستاذة/<strong className="text-foreground">ريم منصور</strong> (نائب رئيس اللجنة)</li>
+                <li>الأستاذ/<strong className="text-foreground">أحمد حسن</strong> (نائب رئيس اللجنة)</li>
             </ul>
         </div>
 
