@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { submitPlan } from "./actions";
-import { Loader2, Trash2, Pencil, CheckCircle2 } from "lucide-react";
+import { Loader2, Trash2, Pencil, CheckCircle2, XCircle } from "lucide-react";
 
 declare global {
   interface Window {
@@ -132,6 +132,13 @@ export function PlanForm() {
     name: "deputies",
   });
 
+  const resetAndCloseEventForm = () => {
+    setNewEvent(initialNewEventState);
+    setNewDate(initialNewDateState);
+    setShowEventForm(false);
+    setEditingEventIndex(null);
+  };
+
   const handleSaveEvent = () => {
     const fullDate = newDate.day && newDate.month && newDate.year ? `${newDate.day}/${newDate.month}/${newDate.year}` : "";
     const eventToSave = { ...newEvent, date: fullDate };
@@ -151,11 +158,7 @@ export function PlanForm() {
       appendEvent(eventToSave);
     }
 
-    // Reset form and state
-    setNewEvent(initialNewEventState);
-    setNewDate(initialNewDateState);
-    setShowEventForm(false);
-    setEditingEventIndex(null);
+    resetAndCloseEventForm();
   };
   
   const handleAddNewEventClick = () => {
@@ -405,7 +408,12 @@ export function PlanForm() {
                         <SelectContent>{eventResults.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
                       </Select>
                     </FormItem>
-                    <Button type="button" onClick={handleSaveEvent}>حفظ الفعالية</Button>
+                    <div className="flex gap-2 justify-end">
+                      <Button type="button" onClick={handleSaveEvent}>حفظ الفعالية</Button>
+                      <Button type="button" variant="destructive" onClick={resetAndCloseEventForm} size="icon">
+                        <XCircle className="h-5 w-5" />
+                      </Button>
+                    </div>
                 </div>
             )}
              <div className="mt-4 text-center">
