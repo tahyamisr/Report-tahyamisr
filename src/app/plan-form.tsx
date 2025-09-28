@@ -410,8 +410,8 @@ export function PlanForm() {
                     </FormItem>
                     <div className="flex gap-2 justify-end">
                       <Button type="button" onClick={handleSaveEvent}>حفظ الفعالية</Button>
-                      <Button type="button" variant="destructive" onClick={resetAndCloseEventForm} size="icon">
-                        <XCircle className="h-5 w-5" />
+                      <Button type="button" variant="destructive" onClick={resetAndCloseEventForm}>
+                        الغاء
                       </Button>
                     </div>
                 </div>
