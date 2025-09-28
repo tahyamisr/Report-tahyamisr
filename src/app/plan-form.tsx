@@ -408,7 +408,7 @@ export function PlanForm() {
                         <SelectContent>{eventResults.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
                       </Select>
                     </FormItem>
-                    <div className="flex gap-2 justify-end">
+                    <div className="flex gap-2 justify-start">
                       <Button type="button" onClick={handleSaveEvent}>حفظ الفعالية</Button>
                       <Button type="button" variant="destructive" onClick={resetAndCloseEventForm}>
                         الغاء
