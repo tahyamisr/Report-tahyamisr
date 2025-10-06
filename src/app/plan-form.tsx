@@ -538,7 +538,7 @@ export function PlanForm() {
         {/* Events Section */}
         <div className="space-y-4">
           <div className={cn("flex items-center", eventFields.length > 0 ? "justify-between" : "justify-center")}>
-            <h3 className="text-xl text-foreground font-bold">الأحداث</h3>
+            <h3 className="text-xl text-foreground font-bold">التقارير</h3>
             {eventFields.length > 0 && (
               <AlertDialog>
                   <AlertDialogTrigger asChild>
