@@ -24,11 +24,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { submitPlan } from "./actions";
 import { Loader2, Trash2, Pencil, CheckCircle2, PlusCircle, Trash } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
 declare global {
@@ -577,7 +577,7 @@ export function PlanForm() {
               <div key={field.id} className="p-4 border rounded-md bg-muted/50 relative">
                  <div className="mb-2">
                     <p className="font-bold">الفعالية #{index + 1}:</p>
-                    <p>{field.details}</p>
+                    <p className="whitespace-pre-wrap">{field.details}</p>
                 </div>
                 <p><strong>التاريخ:</strong> {field.date}</p>
                 <p><strong>النوع:</strong> {field.type}</p>
@@ -612,10 +612,11 @@ export function PlanForm() {
                     <FormItem>
                       <FormLabel>ما هو الحدث؟</FormLabel>
                       <FormControl>
-                          <Input 
+                          <Textarea 
                               placeholder="تفاصيل الحدث" 
                               value={newEvent.details}
                               onChange={(e) => setNewEvent({...newEvent, details: e.target.value})}
+                              className="h-24"
                           />
                       </FormControl>
                     </FormItem>
