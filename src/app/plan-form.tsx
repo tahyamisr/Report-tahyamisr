@@ -726,7 +726,7 @@ export function PlanForm() {
 
 
         <div className="mt-12 text-center">
-          <Button type="submit" size="lg" disabled={isPending || !activeReportId || eventFields.length === 0} className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg text-xl transition shadow-lg w-auto">
+          <Button type="submit" size="lg" disabled={isPending || !showSignatures || eventFields.length === 0} className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg text-xl transition shadow-lg w-auto">
             {isPending ? (
               <>
                 <Loader2 className="ml-2 h-5 w-5 animate-spin" />
