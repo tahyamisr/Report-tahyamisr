@@ -537,7 +537,30 @@ export function PlanForm() {
 
         {/* Events Section */}
         <div className="space-y-4">
-            <h3 className="text-xl text-foreground font-bold text-center">الأحداث</h3>
+            <div className="flex justify-center items-center gap-4">
+                <h3 className="text-xl text-foreground font-bold text-center">الأحداث</h3>
+                {eventFields.length > 0 && (
+                  <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                          <Button type="button" variant="destructive" size="icon" className="h-7 w-7">
+                              <Trash2 className="h-4 w-4" />
+                          </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                          <AlertDialogHeader>
+                          <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
+                          <AlertDialogDescription>
+                              سيتم حذف جميع الفعاليات المسجلة. لا يمكن التراجع عن هذا الإجراء.
+                          </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                          <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => removeEvent()}>حذف الكل</AlertDialogAction>
+                          </AlertDialogFooter>
+                      </AlertDialogContent>
+                  </AlertDialog>
+                )}
+            </div>
             {eventFields.map((field, index) => (
               <div key={field.id} className="p-4 border rounded-md bg-muted/50 relative">
                  <div className="mb-2">
