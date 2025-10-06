@@ -652,7 +652,7 @@ export function PlanForm() {
                 </div>
             )}
              <div className="mt-4 text-center">
-                <Button type="button" onClick={handleAddNewEventClick} variant="secondary" disabled={showEventForm}>
+                <Button type="button" onClick={handleAddNewEventClick} variant="secondary" disabled={showEventForm} className="font-bold">
                   اضافة تقرير
                 </Button>
             </div>
