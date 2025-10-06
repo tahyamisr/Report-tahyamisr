@@ -257,6 +257,16 @@ export function PlanForm() {
   };
   
   const handleAddNewEventClick = () => {
+    const canAddEvents = selectedGovernorate && selectedMonth && selectedYear;
+    if (!canAddEvents) {
+        toast({
+            title: "بيانات أساسية مطلوبة",
+            description: "الرجاء اختيار المحافظة، الشهر، والسنة أولاً لتتمكن من إضافة التقارير.",
+            variant: "destructive",
+        });
+        return;
+    }
+
     const monthIndex = months.indexOf(selectedMonth);
     const monthNumber = monthIndex !== -1 ? (monthIndex + 1).toString() : "";
     
@@ -402,9 +412,6 @@ export function PlanForm() {
   const sortedReports = useMemo(() => {
       return [...savedReports].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [savedReports]);
-
-  const canAddEvents = selectedGovernorate && selectedMonth && selectedYear;
-
 
   if (!isClient) {
     return <div className="flex justify-center items-center min-h-screen"><Loader2 className="h-16 w-16 animate-spin" /></div>;
@@ -645,17 +652,9 @@ export function PlanForm() {
                 </div>
             )}
              <div className="mt-4 text-center">
-                {canAddEvents ? (
-                    <Button type="button" onClick={handleAddNewEventClick} variant="secondary" disabled={showEventForm}>
-                      اضافة تقرير
-                    </Button>
-                ) : (
-                    <Alert variant="destructive" className="max-w-md mx-auto">
-                        <AlertDescription>
-                            الرجاء اختيار المحافظة، الشهر، والسنة أولاً لتتمكن من إضافة التقارير.
-                        </AlertDescription>
-                    </Alert>
-                )}
+                <Button type="button" onClick={handleAddNewEventClick} variant="secondary" disabled={showEventForm}>
+                  اضافة تقرير
+                </Button>
             </div>
         </div>
 
