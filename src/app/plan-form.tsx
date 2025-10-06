@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useFieldArray, useForm, type FieldErrors } from "react-hook-form";
 import { z } from "zod";
 import React, { useTransition, useEffect, useState, useCallback, useMemo } from "react";
 import { v4 as uuidv4 } from 'uuid';
@@ -350,6 +350,33 @@ export function PlanForm() {
       }
     });
   }
+
+  const onInvalid = (errors: FieldErrors<FormValues>) => {
+    let errorMessages = [];
+    const fieldLabels: Record<string, string> = {
+      governorate: "المحافظة",
+      month: "الشهر",
+      year: "السنة",
+      events: "الأحداث",
+      president: "توقيع رئيس اللجنة",
+      deputies: "توقيعات النواب"
+    };
+
+    if (errors.governorate) errorMessages.push(fieldLabels.governorate);
+    if (errors.month) errorMessages.push(fieldLabels.month);
+    if (errors.year) errorMessages.push(fieldLabels.year);
+    if (errors.events) errorMessages.push(fieldLabels.events);
+    if (errors.president) errorMessages.push(fieldLabels.president);
+    if (errors.deputies) errorMessages.push(fieldLabels.deputies);
+
+    if(errorMessages.length > 0) {
+      toast({
+        title: "بيانات غير مكتملة",
+        description: `الرجاء مراجعة الحقول التالية: ${errorMessages.join('، ')}`,
+        variant: "destructive",
+      })
+    }
+  };
   
   const DateSelector = ({ value, onChange }: { value: {day: string, month: string, year: string}, onChange: (date: {day: string, month: string, year: string}) => void }) => {
     return (
@@ -391,7 +418,7 @@ export function PlanForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
         <h3 className="text-3xl font-bold text-center text-primary my-6">تقرير الشهر المركزي</h3>
         
         <div className="p-4 border rounded-md bg-card space-y-4 hidden">
@@ -679,5 +706,3 @@ export function PlanForm() {
     </Form>
   );
 }
-
-    
