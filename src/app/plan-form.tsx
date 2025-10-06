@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { submitPlan } from "./actions";
 import { Loader2, Trash2, Pencil, CheckCircle2, PlusCircle, Trash } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 
 declare global {
@@ -214,6 +215,7 @@ export function PlanForm() {
 
   const selectedMonth = form.watch("month");
   const selectedYear = form.watch("year");
+  const selectedGovernorate = form.watch("governorate");
 
   const { fields: eventFields, append: appendEvent, remove: removeEvent, update: updateEvent } = useFieldArray({
     control: form.control,
@@ -357,7 +359,7 @@ export function PlanForm() {
       governorate: "المحافظة",
       month: "الشهر",
       year: "السنة",
-      events: "الأحداث",
+      events: "التقارير",
       president: "توقيع رئيس اللجنة",
       deputies: "توقيعات النواب"
     };
@@ -400,6 +402,8 @@ export function PlanForm() {
   const sortedReports = useMemo(() => {
       return [...savedReports].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [savedReports]);
+
+  const canAddEvents = selectedGovernorate && selectedMonth && selectedYear;
 
 
   if (!isClient) {
@@ -641,9 +645,17 @@ export function PlanForm() {
                 </div>
             )}
              <div className="mt-4 text-center">
-                <Button type="button" onClick={handleAddNewEventClick} variant="secondary" disabled={showEventForm || !selectedMonth}>
-                  اضافة تقرير
-                </Button>
+                {canAddEvents ? (
+                    <Button type="button" onClick={handleAddNewEventClick} variant="secondary" disabled={showEventForm}>
+                      اضافة تقرير
+                    </Button>
+                ) : (
+                    <Alert variant="destructive" className="max-w-md mx-auto">
+                        <AlertDescription>
+                            الرجاء اختيار المحافظة، الشهر، والسنة أولاً لتتمكن من إضافة التقارير.
+                        </AlertDescription>
+                    </Alert>
+                )}
             </div>
         </div>
 
