@@ -143,6 +143,27 @@ export function PlanForm() {
     defaultValues: getInitialFormValues(),
   });
 
+  const handleNewReport = useCallback(() => {
+    if (!storageKey) return;
+    const newId = uuidv4();
+    const newReport: SavedReport = {
+        id: newId,
+        name: "تقرير جديد",
+        data: getInitialFormValues(),
+        createdAt: new Date().toISOString()
+    };
+    setSavedReports(prev => {
+        const updatedReports = [...prev, newReport];
+        try {
+            window.localStorage.setItem(storageKey, JSON.stringify(updatedReports));
+        } catch(e){ console.error(e) }
+        return updatedReports;
+    });
+    setActiveReportId(newId);
+    form.reset(newReport.data);
+    setShowSignatures(false);
+  }, [storageKey, form]);
+
   // Load reports from localStorage
   useEffect(() => {
     if (storageKey) {
@@ -164,7 +185,7 @@ export function PlanForm() {
         handleNewReport();
       }
     }
-  }, [storageKey]); // form and handleNewReport are not stable, but we only want to run this once on storageKey change.
+  }, [storageKey, form, handleNewReport]);
 
   // Auto-save form changes to localStorage
   useEffect(() => {
@@ -188,7 +209,7 @@ export function PlanForm() {
       }
     });
     return () => subscription.unsubscribe();
-  }, [form.watch, activeReportId, storageKey]);
+  }, [form.watch, activeReportId, storageKey, form]);
 
 
   const selectedMonth = form.watch("month");
@@ -265,27 +286,6 @@ export function PlanForm() {
   const handleShowSignatures = () => {
       setShowSignatures(true);
   }
-
-  const handleNewReport = useCallback(() => {
-    if (!storageKey) return;
-    const newId = uuidv4();
-    const newReport: SavedReport = {
-        id: newId,
-        name: "تقرير جديد",
-        data: getInitialFormValues(),
-        createdAt: new Date().toISOString()
-    };
-    setSavedReports(prev => {
-        const updatedReports = [...prev, newReport];
-        try {
-            window.localStorage.setItem(storageKey, JSON.stringify(updatedReports));
-        } catch(e){ console.error(e) }
-        return updatedReports;
-    });
-    setActiveReportId(newId);
-    form.reset(newReport.data);
-    setShowSignatures(false);
-  }, [storageKey, form]);
 
   const handleLoadReport = (reportId: string) => {
     const reportToLoad = savedReports.find(r => r.id === reportId);
@@ -394,7 +394,7 @@ export function PlanForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <h3 className="text-3xl font-bold text-center text-primary my-6">تقرير الشهر المركزي</h3>
         
-        <div className="p-4 border rounded-md bg-card space-y-4">
+        <div className="p-4 border rounded-md bg-card space-y-4 hidden">
              <h4 className="font-bold text-lg text-center">إدارة التقارير</h4>
              <div className="flex flex-col sm:flex-row gap-2 items-center">
                  <Select onValueChange={handleLoadReport} value={activeReportId ?? ""}>
@@ -679,3 +679,5 @@ export function PlanForm() {
     </Form>
   );
 }
+
+    
