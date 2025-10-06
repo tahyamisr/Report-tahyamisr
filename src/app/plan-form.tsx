@@ -3,7 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
-import React, { useTransition, useEffect, useState } from "react";
+import React, { useTransition, useEffect, useState, useCallback, useMemo } from "react";
+import { v4 as uuidv4 } from 'uuid';
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,9 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { submitPlan } from "./actions";
-import { Loader2, Trash2, Pencil, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, Trash2, Pencil, CheckCircle2, PlusCircle, Trash } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+
 
 declare global {
   interface Window {
@@ -60,6 +63,8 @@ const formSchema = z.object({
   president: arabicQuadName,
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 const months = [
   "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
   "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
@@ -77,48 +82,115 @@ const eventResults = ["تم", "لم يتم"];
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 7 }, (_, i) => (currentYear - 1 + i).toString());
 
+interface SavedReport {
+  id: string;
+  name: string;
+  data: FormValues;
+  createdAt: string;
+}
+
+const getInitialFormValues = (): FormValues => ({
+  governorate: "",
+  month: "",
+  year: new Date().getFullYear().toString(),
+  events: [],
+  deputies: [{ name: "" }],
+  president: "",
+});
+
 
 export function PlanForm() {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
-  const [govDisplay, setGovDisplay] = React.useState("...............");
-  const [showEventForm, setShowEventForm] = React.useState(false);
-  const [showSignatures, setShowSignatures] = React.useState(false);
-  const [showSuccessOverlay, setShowSuccessOverlay] = React.useState(false);
-  
-  const [editingEventIndex, setEditingEventIndex] = React.useState<number | null>(null);
+  const [govDisplay, setGovDisplay] = useState("...............");
+  const [showEventForm, setShowEventForm] = useState(false);
+  const [showSignatures, setShowSignatures] = useState(false);
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+  const [editingEventIndex, setEditingEventIndex] = useState<number | null>(null);
 
   const initialNewEventState = { details: "", date: "", type: "", result: "" };
   const initialNewDateState = { day: "", month: "", year: new Date().getFullYear().toString() };
-
-  // State for the new/editing event being created
-  const [newEvent, setNewEvent] = React.useState(initialNewEventState);
-  const [newDate, setNewDate] = React.useState(initialNewDateState);
+  
+  const [newEvent, setNewEvent] = useState(initialNewEventState);
+  const [newDate, setNewDate] = useState(initialNewDateState);
 
   const [telegramUser, setTelegramUser] = useState<any>(null);
+  const [savedReports, setSavedReports] = useState<SavedReport[]>([]);
+  const [activeReportId, setActiveReportId] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  const storageKey = useMemo(() => telegramUser ? `planifyEgyptReports_${telegramUser.id}` : null, [telegramUser]);
 
   useEffect(() => {
+    setIsClient(true);
     if (window.Telegram && window.Telegram.WebApp) {
       window.Telegram.WebApp.ready();
       const user = window.Telegram.WebApp.initDataUnsafe?.user;
       if (user) {
         setTelegramUser(user);
+      } else {
+        // Fallback for testing in browser without Telegram
+        setTelegramUser({ id: 'test_user' }); 
       }
+    } else {
+       // Fallback for testing in browser without Telegram
+       setTelegramUser({ id: 'test_user' });
     }
   }, []);
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      governorate: "",
-      month: "",
-      year: new Date().getFullYear().toString(),
-      events: [],
-      deputies: [{ name: "" }],
-      president: "",
-    },
+    defaultValues: getInitialFormValues(),
   });
-  
+
+  // Load reports from localStorage
+  useEffect(() => {
+    if (storageKey) {
+      try {
+        const item = window.localStorage.getItem(storageKey);
+        const reports: SavedReport[] = item ? JSON.parse(item) : [];
+        setSavedReports(reports);
+        if (reports.length > 0) {
+          // Load the most recent report by default
+          const lastReport = reports.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+          setActiveReportId(lastReport.id);
+          form.reset(lastReport.data);
+        } else {
+          // If no reports, create a new one
+          handleNewReport();
+        }
+      } catch (error) {
+        console.error("Failed to load reports from localStorage", error);
+        handleNewReport();
+      }
+    }
+  }, [storageKey]); // form and handleNewReport are not stable, but we only want to run this once on storageKey change.
+
+  // Auto-save form changes to localStorage
+  useEffect(() => {
+    const subscription = form.watch((values) => {
+      if (activeReportId && storageKey) {
+        setSavedReports(prevReports => {
+            const updatedReports = prevReports.map(report => {
+                if (report.id === activeReportId) {
+                    const newName = `تقرير ${values.month || ''} ${values.year || ''} - ${values.governorate || ''}`.trim();
+                    return { ...report, data: values as FormValues, name: newName };
+                }
+                return report;
+            });
+            try {
+                window.localStorage.setItem(storageKey, JSON.stringify(updatedReports));
+            } catch (error) {
+                console.error("Failed to save report to localStorage", error);
+            }
+            return updatedReports;
+        });
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form.watch, activeReportId, storageKey]);
+
+
   const selectedMonth = form.watch("month");
   const selectedYear = form.watch("year");
 
@@ -194,7 +266,56 @@ export function PlanForm() {
       setShowSignatures(true);
   }
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  const handleNewReport = useCallback(() => {
+    if (!storageKey) return;
+    const newId = uuidv4();
+    const newReport: SavedReport = {
+        id: newId,
+        name: "تقرير جديد",
+        data: getInitialFormValues(),
+        createdAt: new Date().toISOString()
+    };
+    setSavedReports(prev => {
+        const updatedReports = [...prev, newReport];
+        try {
+            window.localStorage.setItem(storageKey, JSON.stringify(updatedReports));
+        } catch(e){ console.error(e) }
+        return updatedReports;
+    });
+    setActiveReportId(newId);
+    form.reset(newReport.data);
+    setShowSignatures(false);
+  }, [storageKey, form]);
+
+  const handleLoadReport = (reportId: string) => {
+    const reportToLoad = savedReports.find(r => r.id === reportId);
+    if (reportToLoad) {
+      setActiveReportId(reportId);
+      form.reset(reportToLoad.data);
+      setShowSignatures(!!(reportToLoad.data.president || reportToLoad.data.deputies.some(d=>d.name)));
+    }
+  };
+
+  const handleDeleteReport = () => {
+    if (!activeReportId || !storageKey) return;
+    
+    const updatedReports = savedReports.filter(r => r.id !== activeReportId);
+    setSavedReports(updatedReports);
+    try {
+        window.localStorage.setItem(storageKey, JSON.stringify(updatedReports));
+    } catch(e) { console.error(e) }
+
+    if (updatedReports.length > 0) {
+      // Load the most recent remaining report
+       const lastReport = updatedReports.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+       handleLoadReport(lastReport.id);
+    } else {
+      // If no reports left, create a new one
+      handleNewReport();
+    }
+  };
+
+  function onSubmit(values: FormValues) {
     startTransition(async () => {
       const submissionData = {
         governorate: values.governorate,
@@ -249,6 +370,15 @@ export function PlanForm() {
     );
   };
   
+  const sortedReports = useMemo(() => {
+      return [...savedReports].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [savedReports]);
+
+
+  if (!isClient) {
+    return <div className="flex justify-center items-center min-h-screen"><Loader2 className="h-16 w-16 animate-spin" /></div>;
+  }
+
   if (showSuccessOverlay) {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-green-600 text-white">
@@ -264,6 +394,49 @@ export function PlanForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <h3 className="text-3xl font-bold text-center text-primary my-6">تقرير الشهر المركزي</h3>
         
+        <div className="p-4 border rounded-md bg-card space-y-4">
+             <h4 className="font-bold text-lg text-center">إدارة التقارير</h4>
+             <div className="flex flex-col sm:flex-row gap-2 items-center">
+                 <Select onValueChange={handleLoadReport} value={activeReportId ?? ""}>
+                    <SelectTrigger className="flex-grow">
+                        <SelectValue placeholder="اختر تقرير محفوظ..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {sortedReports.map(report => (
+                            <SelectItem key={report.id} value={report.id}>
+                                {report.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                 </Select>
+                 <div className="flex gap-2 w-full sm:w-auto">
+                    <Button type="button" onClick={handleNewReport} className="flex-grow sm:flex-grow-0">
+                        <PlusCircle className="ml-2 h-4 w-4" />
+                        تقرير جديد
+                    </Button>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button type="button" variant="destructive" disabled={!activeReportId || savedReports.length <= 0}>
+                                <Trash className="h-4 w-4" />
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                سيتم حذف هذا التقرير نهائياً. لا يمكن التراجع عن هذا الإجراء.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteReport}>حذف</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                 </div>
+             </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-lg mb-8 p-4 bg-muted/50 rounded-md">
             <FormField
               control={form.control}
@@ -274,7 +447,7 @@ export function PlanForm() {
                   <Select onValueChange={(value) => {
                       field.onChange(value);
                       setGovDisplay(value || "...............");
-                  }} defaultValue={field.value}>
+                  }} value={field.value}>
                     <FormControl>
                       <SelectTrigger><SelectValue placeholder="اختر المحافظة" /></SelectTrigger>
                     </FormControl>
@@ -292,7 +465,7 @@ export function PlanForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-bold">الشهر:</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger><SelectValue placeholder="اختر الشهر" /></SelectTrigger>
                     </FormControl>
@@ -310,7 +483,7 @@ export function PlanForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="font-bold">السنة:</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger><SelectValue placeholder="اختر السنة" /></SelectTrigger>
                     </FormControl>
@@ -326,7 +499,7 @@ export function PlanForm() {
         
         <div className="text-foreground text-sm leading-relaxed mb-6 text-center space-y-2 bg-muted/50 p-3 rounded-md">
             <p>تقرير شهر <span className="font-bold text-primary">{selectedMonth || "................"}</span> لعام <span className="font-bold text-primary">{selectedYear || "...."}</span></p>
-            <p>مقدم من لجنة التنظيم بمحافظة <span className="font-bold text-primary">{govDisplay}</span>.</p>
+            <p>مقدم من لجنة التنظيم بمحافظة <span className="font-bold text-primary">{form.getValues("governorate") || "..............."}</span>.</p>
             <p className="font-semibold">إلى السادة:</p>
             <ul className="list-none p-0 m-0 text-xs text-muted-foreground">
                 <li>المهندس/<strong className="text-foreground">إسلام فارس</strong> (رئيس لجنة التنظيم المركزية)</li>
@@ -491,7 +664,7 @@ export function PlanForm() {
 
 
         <div className="mt-12 text-center">
-          <Button type="submit" size="lg" disabled={isPending || !showSignatures || eventFields.length === 0} className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg text-xl transition shadow-lg w-auto">
+          <Button type="submit" size="lg" disabled={isPending || !activeReportId || eventFields.length === 0} className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg text-xl transition shadow-lg w-auto">
             {isPending ? (
               <>
                 <Loader2 className="ml-2 h-5 w-5 animate-spin" />
